@@ -1,0 +1,54 @@
+name: Prepara dipendenze Sales Desk Linux x64
+
+on:
+  push:
+    paths:
+      - '.github/workflows/prepara-dipendenze-linux-x64.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Node.js 22 Linux x64
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          architecture: x64
+          package-manager-cache: false
+
+      - name: Installa dipendenze Step 56
+        shell: bash
+        run: |
+          cat > package.json <<'JSON'
+          {
+            "name": "sales-desk-react-step56",
+            "private": true,
+            "version": "0.56.0",
+            "type": "module",
+            "dependencies": {
+              "react": "^18.3.1",
+              "react-dom": "^18.3.1"
+            },
+            "devDependencies": {
+              "vite": "^5.4.15",
+              "typescript": "^5.6.3",
+              "tailwindcss": "^4.1.10"
+            }
+          }
+          JSON
+          npm install --include=dev --include=optional --no-audit --no-fund
+          npm ls --depth=0
+          cp package-lock.json dependency-lock-for-reference.json
+          tar -czf sales-desk-deps-linux-x64.tar.gz node_modules dependency-lock-for-reference.json
+
+      - name: Rendi disponibile il pacchetto da scaricare
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-desk-deps-linux-x64
+          path: sales-desk-deps-linux-x64.tar.gz
+          retention-days: 7
+          if-no-files-found: error
